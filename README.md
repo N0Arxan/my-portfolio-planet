@@ -1,6 +1,6 @@
 # 🌍 Arshan's Portfolio Planet
 
-> **Live at**: [arshan.me](https://arshan.me)
+> **Live at**: [arshan.me](http://arxan.me)
 
 An immersive, interactive 3D portfolio showcasing my journey from Bandar Abbas, Iran to Barcelona, Spain. Built with cutting-edge web technologies to create a unique, planet-based navigation experience.
 
@@ -380,7 +380,7 @@ This project is personal portfolio code. Feel free to use it as inspiration, but
 **Arshan** - Full-stack developer passionate about creating immersive web experiences.
 
 
-- 🌐 [arshan.me](https://arshan.me)
+- 🌐 [arshan.me](http://arxan.me)
 
 ---
 
