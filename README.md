@@ -49,23 +49,23 @@ This portfolio transforms the traditional CV into an explorable 3D Earth visuali
 │  ├─ Handles HTML marker positioning                     │
 │  └─ Provides camera controls                            │
 └─────────────────────────────────────────────────────────┘
-                          ↓
+                            ↓
 ┌─────────────────────────────────────────────────────────┐
 │  Three.js (Core 3D engine)                              │
 │  ├─ Scene management                                    │
-│  ├─ Material system (PBR with roughness/metalness)     │
-│  ├─ 3-point lighting setup                             │
-│  └─ OrbitControls with polar angle constraints         │
+│  ├─ Material system (PBR with roughness/metalness)      │
+│  ├─ 3-point lighting setup                              │
+│  └─ OrbitControls with polar angle constraints          │
 └─────────────────────────────────────────────────────────┘
-                          ↓
+                            ↓
 ┌─────────────────────────────────────────────────────────┐
 │  Post-Processing (EffectComposer)                       │
-│  ├─ RenderPass (base render)                           │
-│  ├─ UnrealBloomPass (atmospheric glow)                 │
-│  └─ ACES Filmic Tone Mapping                           │
+│  ├─ RenderPass (base render)                            │
+│  ├─ UnrealBloomPass (atmospheric glow)                  │
+│  └─ ACES Filmic Tone Mapping                            │
 └─────────────────────────────────────────────────────────┘
-                          ↓
-                     WebGL Renderer
+                            ↓
+                       WebGL Renderer
 ```
 
 ### Contact System Security Architecture
