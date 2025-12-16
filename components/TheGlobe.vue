@@ -6,8 +6,8 @@ const globeDiv = ref<HTMLElement | null>(null);
 let globeInstance: any = null;
 let composer: any = null;
 let animationId: number | null = null;
-let satelliteGroup: any = null;
-let blinkLight: any = null;
+let satellites: any[] = [];
+let spaceDust: any = null;
 
 onMounted(async () => {
     await nextTick();
@@ -94,7 +94,8 @@ onMounted(async () => {
     scene.add(ambientLight);
 
     addStarfield(THREE, scene);
-    createSatellite(THREE, scene);
+    addSatelliteConstellation(THREE, scene, 15);
+    addSpaceDust(THREE, scene);
     addLocationMarkers();
 
     const controls = globeInstance.controls();
@@ -126,18 +127,18 @@ onMounted(async () => {
     function animate() {
         controls.update();
 
-        if (satelliteGroup) {
-            const time = Date.now() * 0.0005;
-            const radius = 115;
+        satellites.forEach(sat => {
+            if (sat.group) sat.group.rotation.y += sat.speed;
             
-            satelliteGroup.position.x = radius * Math.sin(time);
-            satelliteGroup.position.y = radius * Math.cos(time);
-            satelliteGroup.position.z = radius * Math.sin(time * 0.5);
-            satelliteGroup.lookAt(0, 0, 0);
-
-            if (blinkLight) {
-                blinkLight.intensity = Math.sin(Date.now() * 0.005) > 0 ? 2 : 0;
+            if (sat.blinkLight) {
+                // Random blink pattern
+                sat.blinkLight.intensity = Math.sin(Date.now() * 0.005 + sat.offset) > 0.5 ? 2 : 0;
             }
+        });
+
+        if (spaceDust) {
+            spaceDust.rotation.y += 0.0002;
+            spaceDust.rotation.x += 0.0001;
         }
 
         composer.render();
@@ -149,30 +150,92 @@ onMounted(async () => {
 });
 
 // --- HELPER FUNCTIONS ---
-function createSatellite(THREE: any, scene: any) {
-    satelliteGroup = new THREE.Group();
+function addSatelliteConstellation(THREE: any, scene: any, count: number) {
+    const satGeometry = new THREE.BoxGeometry(1, 1, 2);
+    const satMaterial = new THREE.MeshStandardMaterial({
+        color: 0xcccccc,
+        roughness: 0.3,
+        metalness: 0.8
+    });
 
-    const bodyGeo = new THREE.BoxGeometry(2, 2, 4);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.2, metalness: 1.0 });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    satelliteGroup.add(body);
+    const panelGeo = new THREE.BoxGeometry(4, 0.1, 1.5);
+    const panelMat = new THREE.MeshBasicMaterial({ color: 0x3366ff });
 
-    const panelGeo = new THREE.BoxGeometry(12, 0.2, 3);
-    const panelMat = new THREE.MeshStandardMaterial({ color: 0x111199, emissive: 0x111199, emissiveIntensity: 0.2, roughness: 0.1, metalness: 0.9 });
-    const panels = new THREE.Mesh(panelGeo, panelMat);
-    satelliteGroup.add(panels);
+    const lightGeo = new THREE.SphereGeometry(0.2, 4, 4);
+    const lightMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Green lights for constellation
 
-    const lightGeo = new THREE.SphereGeometry(0.5, 8, 8);
-    const lightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    blinkLight = new THREE.Mesh(lightGeo, lightMat);
-    blinkLight.position.set(0, 2, 0);
-    satelliteGroup.add(blinkLight);
+    for(let i=0; i<count; i++) {
+        const orbitGroup = new THREE.Group();
 
-    const pointLight = new THREE.PointLight(0xff0000, 1, 10);
-    pointLight.position.set(0, 2, 0);
-    satelliteGroup.add(pointLight);
+        // Random orientation for the orbit
+        orbitGroup.rotation.x = Math.random() * Math.PI * 2;
+        orbitGroup.rotation.z = Math.random() * Math.PI * 2;
 
-    scene.add(satelliteGroup);
+        const radius = 110 + Math.random() * 50; // 110-160 radius
+
+        // Create satellite mesh
+        const sat = new THREE.Group();
+        const body = new THREE.Mesh(satGeometry, satMaterial);
+        sat.add(body);
+
+        // Solar panels
+        const panels = new THREE.Mesh(panelGeo, panelMat);
+        sat.add(panels);
+
+        // Blinking light
+        const blinkLight = new THREE.Mesh(lightGeo, lightMat);
+        blinkLight.position.set(0, 0.8, 0);
+        sat.add(blinkLight);
+
+        // Position satellite at the edge of the orbit radius
+        sat.position.set(radius, 0, 0);
+
+        // Add satellite to the orbit group
+        orbitGroup.add(sat);
+
+        scene.add(orbitGroup);
+
+        satellites.push({
+            group: orbitGroup,
+            speed: (0.001 + Math.random() * 0.003) * (Math.random() > 0.5 ? 1 : -1), // Random speed and direction
+            blinkLight: blinkLight,
+            offset: Math.random() * 100 // Random blink offset
+        });
+    }
+}
+
+function addSpaceDust(THREE: any, scene: any) {
+    const particleCount = 3000;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const sizes = new Float32Array(particleCount);
+
+    for (let i = 0; i < particleCount; i++) {
+        // Random spherical coordinates
+        const r = 120 + Math.random() * 300; // Distance from center (120-420)
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+
+        positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+        positions[i * 3 + 2] = r * Math.cos(phi);
+
+        sizes[i] = Math.random() * 2;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+    const material = new THREE.PointsMaterial({
+        color: 0x88ccff,
+        size: 0.5,
+        transparent: true,
+        opacity: 0.2,
+        sizeAttenuation: true
+    });
+
+    spaceDust = new THREE.Points(geometry, material);
+    scene.add(spaceDust);
 }
 
 function addStarfield(THREE: any, scene: any) {
